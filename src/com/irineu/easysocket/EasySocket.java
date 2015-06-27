@@ -1,58 +1,57 @@
 package com.irineu.easysocket;
 
-import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Created by irineuantunes on 6/27/15.
+ * Created by irineuantunes on 6/26/15.
  */
-public class EasySocket {
-    private Socket socket;
-    private int messageSize = -1;
-    private int id;
-    private DataInputStream inputStream;
+public abstract class EasySocket {
 
-    public EasySocket(Socket socket, int id) throws IOException {
-        this.socket = socket;
-        this.inputStream = new DataInputStream(socket.getInputStream());
-        this.id = id;
+    private List<EasySocketConnection> activeConnections = new ArrayList<>();
+    private AtomicInteger idGenerator = new AtomicInteger();
+
+    public static void send(EasySocketConnection easySocketConnection, byte[] data) throws IOException {
+        byte [] header = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(data.length).array();
+        byte [] buffer = new byte[header.length + data.length];
+        System.arraycopy(header, 0, buffer, 0, header.length);
+        System.arraycopy(data, 0, buffer, header.length, data.length);
+        easySocketConnection.getSocket().getOutputStream().write(buffer,0,buffer.length);
+        easySocketConnection.getSocket().getOutputStream().flush();
     }
 
-    public int getMessageSize() {
-        return messageSize;
-    }
+    public abstract void onMessage(EasySocketConnection easySocketConnection, byte [] message);
+    public abstract void onClose(EasySocketConnection easySocketConnection);
 
-    public void setMessageSize(int messageSize) {
-        this.messageSize = messageSize;
-    }
-
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public DataInputStream getInputStream() {
-        return inputStream;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof EasySocket)) return false;
-
-        EasySocket that = (EasySocket) o;
-
-        return getId() == that.getId();
-
-    }
-
-    @Override
-    public int hashCode() {
-        return getId();
+    public final EasySocketConnection addConnection(final Socket socket) throws IOException {
+        final EasySocketConnection easySocketConnection = new EasySocketConnection(socket,idGenerator.getAndIncrement());
+        activeConnections.add(easySocketConnection);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    while(true){
+                        byte [] header = new byte[4];
+                        easySocketConnection.getInputStream().read(header);
+                        int size = ByteBuffer.allocate(4).wrap(header).order(ByteOrder.LITTLE_ENDIAN).getInt();
+                        if(size==0)break;
+                        easySocketConnection.setMessageSize(size);
+                        byte[] message = new byte[easySocketConnection.getMessageSize()];
+                        easySocketConnection.getInputStream().readFully(message);
+                        onMessage(easySocketConnection, message);
+                    }
+                    activeConnections.remove(easySocketConnection);
+                    onClose(easySocketConnection);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+        return easySocketConnection;
     }
 }
