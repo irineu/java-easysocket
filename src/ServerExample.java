@@ -1,14 +1,15 @@
-package com.irineu.easysocket;
+import com.irineu.easysocket.EasyServerSocket;
+import com.irineu.easysocket.EasySocket;
+import com.irineu.easysocket.EasySocketConnection;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class Main {
+public class ServerExample {
 
     static int port = 3000;
 
-    static EasyServerSocket easyServerSocket= new EasyServerSocket(){
-
+    EasyServerSocket easyServerSocket= new EasyServerSocket(){
 
         @Override
         public void onListening() {
@@ -38,7 +39,7 @@ public class Main {
         }
     };
 
-    public static void main(String[] args) throws IOException {
+    public ServerExample() throws IOException {
         easyServerSocket.listen(port);
     }
 }

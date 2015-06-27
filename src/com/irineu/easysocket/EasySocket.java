@@ -27,6 +27,7 @@ public abstract class EasySocket {
 
     public abstract void onMessage(EasySocketConnection easySocketConnection, byte [] message);
     public abstract void onClose(EasySocketConnection easySocketConnection);
+    public abstract void onConnection(EasySocketConnection easySocketConnection);
 
     public final EasySocketConnection addConnection(final Socket socket) throws IOException {
         final EasySocketConnection easySocketConnection = new EasySocketConnection(socket,idGenerator.getAndIncrement());
@@ -53,5 +54,9 @@ public abstract class EasySocket {
             }
         }).start();
         return easySocketConnection;
+    }
+
+    public List<EasySocketConnection> getActiveConnections() {
+        return activeConnections;
     }
 }

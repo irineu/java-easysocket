@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="java-easysocket">
+    <output-path>$PROJECT_DIR$/out/artifacts/java_easysocket</output-path>
+    <root id="archive" name="java-easysocket.jar">
+      <element id="module-output" name="java-easysocket" />
+    </root>
+  </artifact>
+</component>

@@ -13,7 +13,6 @@ public abstract class EasyServerSocket extends EasySocket {
     private ServerSocket serverSocket;
 
     public abstract void onListening();
-    public abstract void onConnection(EasySocketConnection easySocketConnection);
 
     public EasyServerSocket listen(int port) throws IOException {
         serverSocket = new ServerSocket(port);
